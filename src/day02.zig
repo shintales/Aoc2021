@@ -9,10 +9,60 @@ const Str = []const u8;
 const util = @import("util.zig");
 const gpa = util.gpa;
 
-const data = @embedFile("../data/day02.txt");
-
 pub fn main() !void {
-    
+    var file = try std.fs.cwd().openFile("data/day02.txt", .{});
+    defer file.close();
+
+    var buf_reader = std.io.bufferedReader(file.reader());
+    var in_stream = buf_reader.reader();
+
+    try partOne(&in_stream);
+    // Seek back to the start if the file since the stream will be
+    // at the end after partOne runs
+    try file.seekTo(0);
+    try partTwo(&in_stream);
+}
+
+fn partOne(reader: anytype) !void {
+    var horizontal_position: i32 = 0;
+    var depth: i32 = 0;
+    var value: i32 = undefined;
+    var buf: [1024]u8 = undefined;
+    while (try reader.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+        var index: usize = 0;
+        while (line[index] != ' ') : (index+=1) {}
+        value = try parseInt(i32, line[index+1..line.len], 10);
+        _ = switch (line[0]) {
+            'f' => horizontal_position += value,
+            'd' => depth += value,
+            'u' => depth -= value,
+            else => unreachable,
+        };
+    }
+    print("{}\n", .{horizontal_position*depth});
+}
+
+fn partTwo(reader: anytype) !void {
+    var horizontal_position: i32 = 0;
+    var depth: i32 = 0;
+    var aim: i32 = 0;
+    var value: i32 = undefined;
+    var buf: [1024]u8 = undefined;
+    while (try reader.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+        var index: usize = 0;
+        while (line[index] != ' ') : (index+=1) {}
+        value = try parseInt(i32, line[index+1..line.len], 10);
+        _ = switch (line[0]) {
+            'f' => {
+                horizontal_position += value;
+                depth += (aim * value);
+            },
+            'd' => aim += value,
+            'u' => aim -= value,
+            else => unreachable,
+        };
+    }
+    print("{}\n", .{horizontal_position*depth});
 }
 
 // Useful stdlib functions
